@@ -5,6 +5,16 @@ const VIDEO_URL =
 
 const FADE_DURATION = 0.5 // seconds for fade-in / fade-out
 
+// Where the cinematic background plate begins. Raised well above the
+// original 300px so far more of the scene shows — a wide, expansive view.
+const VIDEO_TOP = '110px'
+
+// "Eternal Sunshine"-style grade, but crisper: keeps the gently faded,
+// cool mood while restoring contrast/saturation and applying a real
+// unsharp pass (url(#ae-sharpen)) for more detail and clarity. No blur.
+const CINEMATIC_FILTER =
+  'url(#ae-sharpen) saturate(0.82) brightness(1.04) contrast(1.03) sepia(0.05)'
+
 const NAV_ITEMS = [
   { label: 'Home', active: true },
   { label: 'Studio', active: false },
@@ -64,20 +74,62 @@ function App() {
   }, [])
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-background">
+    <div className="relative min-h-[185vh] w-full overflow-hidden bg-background">
+      {/* Hidden SVG defs: a gentle unsharp-mask convolution for the video */}
+      <svg aria-hidden="true" className="absolute h-0 w-0" focusable="false">
+        <filter id="ae-sharpen">
+          <feConvolveMatrix
+            order="3"
+            preserveAlpha="true"
+            kernelMatrix="0 -0.2 0 -0.2 1.8 -0.2 0 -0.2 0"
+          />
+        </filter>
+      </svg>
+
       {/* ── Background video layer (z-0) ───────────────────────── */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0 bg-background">
         <video
           ref={videoRef}
           className="absolute h-full w-full object-cover"
-          style={{ inset: 'auto 0 0 0', top: '300px', opacity: 0 }}
+          style={{
+            inset: 'auto 0 0 0',
+            top: VIDEO_TOP,
+            opacity: 0,
+            transform: 'scale(1.02)',
+            transformOrigin: 'center 40%',
+            filter: CINEMATIC_FILTER,
+          }}
           src={VIDEO_URL}
           muted
           playsInline
           autoPlay
           preload="auto"
         />
-        {/* Gradient overlays over the video */}
+
+        {/* Cool, dreamy color wash (Eternal Sunshine mood) */}
+        <div
+          className="pointer-events-none absolute"
+          style={{
+            inset: 'auto 0 0 0',
+            top: VIDEO_TOP,
+            background:
+              'linear-gradient(180deg, rgba(120,140,170,0.11), rgba(150,160,180,0.03) 45%, rgba(118,136,166,0.10))',
+            mixBlendMode: 'multiply',
+          }}
+        />
+
+        {/* Soft cinematic vignette around the frame */}
+        <div
+          className="pointer-events-none absolute"
+          style={{
+            inset: 'auto 0 0 0',
+            top: VIDEO_TOP,
+            background:
+              'radial-gradient(125% 95% at 50% 42%, transparent 58%, rgba(26,30,40,0.24) 100%)',
+          }}
+        />
+
+        {/* White top/bottom fade so the video melts into the page */}
         <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background" />
       </div>
 
@@ -149,6 +201,24 @@ function App() {
           Begin Journey
         </button>
       </section>
+
+      {/* ── Scroll hint for the now-tall page (z-10) ───────────── */}
+      <div
+        className="animate-fade-rise-delay-2 pointer-events-none absolute left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-3"
+        style={{ top: '88vh', color: '#6F6F6F' }}
+      >
+        <span className="font-body text-xs uppercase tracking-[0.25em]">
+          Scroll
+        </span>
+        <span
+          style={{
+            display: 'block',
+            width: '1px',
+            height: '56px',
+            background: 'linear-gradient(#6F6F6F, transparent)',
+          }}
+        />
+      </div>
     </div>
   )
 }
